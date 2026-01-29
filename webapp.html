@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FosStars</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 400px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid gold;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: gold;
+            margin-bottom: 10px;
+        }
+        .subtitle { color: #ccc; font-size: 14px; margin-bottom: 20px; }
+        .balance-box {
+            background: #111;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin: 25px 0;
+            border: 1px solid #333;
+        }
+        .balance-title { color: #aaa; font-size: 16px; margin-bottom: 10px; }
+        .balance-amount {
+            font-size: 42px;
+            color: gold;
+            font-weight: bold;
+        }
+        .menu { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; }
+        .btn {
+            background: #222;
+            color: white;
+            border: none;
+            padding: 22px;
+            border-radius: 12px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        .btn:hover { background: #2a2a2a; transform: translateY(-2px); }
+        .btn-deposit { background: #28a745; color: white; font-weight: bold; }
+        .btn-withdraw { background: #dc3545; color: white; font-weight: bold; }
+        .btn-claim {
+            background: gold;
+            color: black;
+            font-weight: bold;
+            font-size: 22px;
+            padding: 25px;
+        }
+        .stars-display {
+            font-size: 60px;
+            color: gold;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .info-box {
+            background: #111;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid gold;
+            font-size: 14px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">⭐ FosStars</div>
+            <div class="subtitle">1 star = 1.17 руб • Самые быстрые выплаты</div>
+        </div>
+        
+        <div class="balance-box">
+            <div class="balance-title">Ваш баланс</div>
+            <div class="balance-amount" id="balance">0</div>
+            <div style="color: #28a745; font-size: 12px; margin-top: 5px;">✓ Доступно для вывода</div>
+        </div>
+        
+        <div id="main-menu" class="menu">
+            <button class="btn btn-deposit" onclick="sendAction('deposit')">📥 Пополнить баланс</button>
+            <button class="btn btn-withdraw" onclick="sendAction('withdraw')">📤 Вывести средства</button>
+            <button class="btn" onclick="sendAction('history')">📊 История операций</button>
+            
+            <div class="info-box">
+                💎 Минимальная комиссия: 1.17 руб/звезда<br>
+                ⚡ Вывод за 5 минут<br>
+                🔒 Безопасно и анонимно
+            </div>
+        </div>
+        
+        <div id="claim-menu" class="menu" style="display: none;">
+            <div class="stars-display" id="stars-count">100 ⭐</div>
+            <button class="btn btn-claim" onclick="sendAction('claim')">🎁 Забрать звёзды</button>
+            <div class="info-box">
+                🎉 Вам доступен чек! Нажмите кнопку выше, чтобы получить звёзды на баланс.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.hide();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const checkId = urlParams.get('check_id');
+        const stars = urlParams.get('stars') || '100';
+        
+        if (checkId) {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('claim-menu').style.display = 'block';
+            document.getElementById('stars-count').textContent = stars + ' ⭐';
+            localStorage.setItem('check_id', checkId);
+            localStorage.setItem('stars', stars);
+        } else {
+            const savedBalance = localStorage.getItem('balance') || '0';
+            document.getElementById('balance').textContent = savedBalance;
+        }
+        
+        function sendAction(action) {
+            let data = { action: action };
+            
+            if (action === 'claim') {
+                data.check_id = localStorage.getItem('check_id');
+                data.stars = localStorage.getItem('stars');
+            }
+            
+            if (action === 'deposit' || action === 'withdraw') {
+                data.user_id = tg.initDataUnsafe.user?.id;
+            }
+            
+            tg.sendData(JSON.stringify(data));
+            
+            if (action === 'claim') {
+                setTimeout(() => tg.close(), 1000);
+            }
+        }
+        
+        function updateBalance(newBalance) {
+            document.getElementById('balance').textContent = newBalance;
+            localStorage.setItem('balance', newBalance);
+        }
+        
+        if (tg.initDataUnsafe.start_param) {
+            updateBalance(tg.initDataUnsafe.start_param);
+        }
+    </script>
+</body>
+</html>
